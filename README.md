@@ -1,266 +1,262 @@
-# 🚀 Matrix Operations in C
+<div align="center">
 
-<p align="center">
+# 🧮 Advanced Matrix Calculator
 
-![C](https://img.shields.io/badge/Language-C-00599C?style=for-the-badge&logo=c&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
-![Platform](https://img.shields.io/badge/Platform-CLI-orange?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+### ⚡ A Powerful Matrix Operations Toolkit Built in C
 
-</p>
-
-<p align="center">
-A beginner-friendly C project that performs essential <b>Matrix Operations</b> such as Addition, Multiplication, and Transpose using 2D arrays and functions.
-</p>
+![Language](https://img.shields.io/badge/Language-C-blue?style=for-the-badge&logo=c)
+![Platform](https://img.shields.io/badge/Platform-Console-success?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Completed-brightgreen?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge)
+![Algorithms](https://img.shields.io/badge/Algorithms-Linear%20Algebra-red?style=for-the-badge)
 
 ---
 
-# 📑 Table of Contents
+### 🚀 A feature-rich menu-driven matrix calculator implementing advanced Linear Algebra algorithms in pure C.
 
-- ✨ Features
-- 🛠 Technologies Used
-- 📚 Concepts Covered
-- 📁 Project Structure
-- ⚡ Getting Started
-- 🎯 Example Output
-- 📊 Time Complexity
-- ⚠️ Constraints
-- 💡 What I Learned
-- 🚀 Future Improvements
-- 👨‍💻 Author
-- 📄 License
+⭐ If you like this project, don't forget to **Star** the repository!
+
+</div>
+
+---
+
+# 📖 Overview
+
+This project is a complete **Matrix Calculator** developed in **C Programming** that performs both **basic** and **advanced** matrix operations.
+
+Unlike a simple calculator, this project includes powerful numerical algorithms such as **LU Decomposition**, **Gaussian Elimination**, **Eigenvalue Computation**, **Matrix Exponentiation**, **Linear Equation Solver**, and much more.
 
 ---
 
 # ✨ Features
 
-✅ Matrix Addition
+## 🔹 Basic Matrix Operations
 
-✅ Matrix Multiplication
-
-✅ Matrix Transpose
-
-✅ Input Validation
-
-✅ Menu Driven Program
-
-✅ Modular Function Design
-
-✅ Beginner Friendly Code
+- ➕ Matrix Addition (Multiple Matrices)
+- ➖ Matrix Subtraction
+- ✖️ Matrix Multiplication
+- 🔢 Scalar Multiplication
+- 🔄 Matrix Transpose
+- 🆔 Identity Matrix Generation
+- ✅ Matrix Comparison
 
 ---
 
-# 🛠 Technologies Used
+## 🔹 Advanced Matrix Operations
 
-| Technology | Purpose |
-|------------|---------|
-| 💙 C Language | Core Programming |
-| 💻 GCC Compiler | Compilation |
-| 🖥 Command Line | Program Execution |
+- 📐 Determinant
+- 📊 Matrix Rank
+- 📈 Matrix Trace
+- 🔁 Matrix Inverse
+- 🧩 Cofactor Matrix
+- 🔀 Adjoint Matrix
+- ⚡ Matrix Exponentiation
+
+---
+
+## 🔹 Numerical Algorithms
+
+- 📉 Gaussian Elimination
+- 📚 LU Decomposition
+- 🧮 Solve Linear System (Ax = b)
+- 📌 Eigenvalues (2×2 & 3×3)
+
+---
+
+# 🌟 Special Features
+
+✅ Supports Floating Point Matrices
+
+✅ Clean Matrix Formatting
+
+✅ Previous Result Memory
+
+✅ Multi-Matrix Operations
+
+✅ Dimension Validation
+
+✅ Recursive Determinant
+
+✅ Binary Exponentiation
+
+✅ Fast Computation
+
+---
+
+# 📋 Complete Menu
+
+| No. | Operation |
+|:---:|-----------|
+| 1 | Matrix Addition |
+| 2 | Matrix Multiplication |
+| 3 | Matrix Transpose |
+| 4 | Matrix Subtraction |
+| 5 | Scalar Multiplication |
+| 6 | Identity Matrix |
+| 7 | Compare Matrices |
+| 8 | Determinant |
+| 9 | Matrix Inverse |
+| 10 | Matrix Rank |
+| 11 | Trace |
+| 12 | Adjoint Matrix |
+| 13 | Cofactor Matrix |
+| 14 | Gaussian Elimination |
+| 15 | LU Decomposition |
+| 16 | Matrix Exponentiation |
+| 17 | Solve Linear Equations |
+| 18 | Eigenvalues |
+
+---
+
+# 🧠 Algorithms Used
+
+| Algorithm | Purpose |
+|-----------|---------|
+| Recursive Determinant | Determinant Calculation |
+| Binary Exponentiation | Matrix Power |
+| Gaussian Elimination | Rank & Row Reduction |
+| LU Decomposition | Matrix Factorization |
+| Back Substitution | Linear Equation Solver |
+| Characteristic Polynomial | Eigenvalue Computation |
 
 ---
 
 # 📚 Concepts Covered
 
-- 📌 Two-Dimensional Arrays
-- 📌 Functions
-- 📌 Nested Loops
-- 📌 Matrix Mathematics
-- 📌 Conditional Statements
-- 📌 User Input Validation
-- 📌 Modular Programming
+- Arrays
+- Functions
+- Recursion
+- Matrix Mathematics
+- Floating Point Arithmetic
+- Numerical Methods
+- Linear Algebra
+- Algorithm Design
+- Time Complexity
+- Memory Management
 
 ---
 
-# 📁 Project Structure
+# ⚙️ Requirements
 
-```text
-Matrix-Operations/
-│
-├── matrix_operations.c
-└── README.md
-```
+- GCC Compiler
+
+- C99 or above
+
+- math.h Library
 
 ---
 
-# ⚡ Getting Started
-
-## 📥 Clone Repository
+# ▶️ Compilation
 
 ```bash
-git clone https://github.com/yourusername/Matrix-Operations.git
-```
-
-Move into the project folder
-
-```bash
-cd Matrix-Operations
-```
-
-Compile
-
-```bash
-gcc matrix_operations.c -o matrix_operations
+gcc matrix_calculator.c -o matrix_calculator -lm
 ```
 
 Run
 
 ```bash
-./matrix_operations
+./matrix_calculator
 ```
 
 ---
 
-# 🎯 Example Output
+# 📁 Project Structure
 
-```text
-========== MATRIX OPERATIONS ==========
-
-1. Matrix Addition
-2. Matrix Multiplication
-3. Matrix Transpose
-
-Enter Choice : 1
-
-Enter rows and columns : 2 2
-
-Matrix A
-
-1 2
-3 4
-
-Matrix B
-
-5 6
-7 8
-
-Result
-
-6   8
-10  12
+```
+Advanced-Matrix-Calculator
+│
+├── matrix_calculator.c
+├── README.md
+└── LICENSE
 ```
 
 ---
 
-# 📊 Time Complexity
+# 💡 Highlights
 
-| Operation | Complexity |
-|-----------|------------|
-| ➕ Addition | O(r × c) |
-| ✖ Multiplication | O(r × c × k) |
-| 🔄 Transpose | O(r × c) |
+| Feature | Status |
+|---------|:------:|
+| Multiple Matrix Addition | ✅ |
+| Multiple Matrix Multiplication | ✅ |
+| Floating Point Support | ✅ |
+| Previous Result Memory | ✅ |
+| Matrix Comparison | ✅ |
+| Determinant | ✅ |
+| Matrix Inverse | ✅ |
+| Matrix Rank | ✅ |
+| Matrix Trace | ✅ |
+| Adjoint Matrix | ✅ |
+| Cofactor Matrix | ✅ |
+| Gaussian Elimination | ✅ |
+| LU Decomposition | ✅ |
+| Matrix Exponentiation | ✅ |
+| Solve Linear Equations | ✅ |
+| Eigenvalues | ✅ |
 
 ---
 
-# ⚠️ Constraints
+# 🎯 Learning Outcomes
 
-> ⚠️ The program uses fixed-size arrays.
+This project demonstrates practical implementation of
 
-- Matrix size must be within **MAX_SIZE**
-- Addition requires same dimensions
-- Multiplication requires
+- Linear Algebra
 
-```text
-Columns of Matrix A = Rows of Matrix B
-```
+- Matrix Computation
 
----
+- Numerical Computing
 
-# 💡 What I Learned
+- Data Processing
 
-✔ Working with 2D Arrays
+- Algorithm Optimization
 
-✔ Passing Arrays to Functions
+- Problem Solving
 
-✔ Matrix Mathematics
-
-✔ Input Validation
-
-✔ Function-Based Programming
-
-✔ Code Reusability
-
-✔ Writing Cleaner Programs
+- Mathematical Programming
 
 ---
 
 # 🚀 Future Improvements
 
-- ✅ Matrix Subtraction
-- ✅ Scalar Multiplication
-- ✅ Determinant Calculation
-- ✅ Matrix Inverse
-- ✅ Dynamic Memory Allocation (`malloc`)
-- ✅ Identity Matrix
-- ✅ File Handling
-- ✅ Matrix Exponentiation
+- File Save & Load
+
+- Sparse Matrix Operations
+
+- QR Decomposition
+
+- Cholesky Decomposition
+
+- SVD
+
+- Matrix Visualization
+
+- GUI Version
+
+- Complex Matrix Support
 
 ---
 
-# 📈 Project Highlights
+# 🤝 Contributing
 
-| Feature | Status |
-|---------|--------|
-| Matrix Addition | ✅ |
-| Matrix Multiplication | ✅ |
-| Matrix Transpose | ✅ |
-| Input Validation | ✅ |
-| Modular Functions | ✅ |
+Contributions are welcome!
+
+If you have ideas for new matrix algorithms or optimizations, feel free to fork the repository and submit a Pull Request.
 
 ---
 
-<details>
+# ⭐ Support
 
-<summary>📖 Why This Project?</summary>
+If this project helped you learn something new,
 
-This project was created to strengthen my understanding of:
+## ⭐ Give this repository a Star!
 
-- Two-dimensional arrays
-- Functions in C
-- Matrix algorithms
-- Problem-solving
-- Writing clean and modular code
-
-It serves as a beginner-friendly demonstration of fundamental C programming concepts.
-
-</details>
+It motivates me to build more open-source projects.
 
 ---
 
-# 👨‍💻 Author
+<div align="center">
 
-## **Sibanand Sahu**
+### 💻 Built with ❤️ in C
 
-🎓 B.Tech – Computer Science & Engineering (AI & ML)
+**Happy Coding! 🚀**
 
-🌟 Learning Data Structures & Algorithms
-
-🚀 Building projects to strengthen C programming and problem-solving skills.
-
----
-
-# 🌟 Support
-
-If you found this project helpful,
-
-⭐ **Star this repository**
-
-🍴 **Fork it**
-
-📢 **Share it with others**
-
----
-
-# 📄 License
-
-This project is licensed under the **MIT License**.
-
----
-
-<p align="center">
-
-### ⭐ Thanks for visiting this repository! ⭐
-
-Happy Coding ❤️
-
-</p>
+</div>
