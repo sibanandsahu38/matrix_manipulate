@@ -10,6 +10,8 @@
 ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge)
 ![Algorithms](https://img.shields.io/badge/Algorithms-Linear%20Algebra-red?style=for-the-badge)
 
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Visit_Website-7C3AED?style=for-the-badge)](https://matrix-engine-studio.vercel.app)
+
 ---
 
 ### 🚀 A feature-rich menu-driven matrix calculator implementing advanced Linear Algebra algorithms in pure C.
