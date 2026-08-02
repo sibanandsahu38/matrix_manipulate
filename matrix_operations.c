@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <math.h>
-#define MAX_SIZE 10
+#define MAX_SIZE 20
 #define EPS 1e-9
 
 /* =========================================================
@@ -397,34 +397,64 @@ int main() {
         scanf("%d", &choice);
 
         switch (choice) {
-            case 1:
-                printf("Enter rows and columns for both matrices (must match): ");
+            case 1: {
+                int count;
+                printf("How many matrices do you want to add (2 or more)? ");
+                scanf("%d", &count);
+                printf("Enter rows and columns (all matrices must match): ");
                 scanf("%d %d", &rowsA, &colsA);
-                rowsB = rowsA; colsB = colsA;
-                get_matrix_input(a, rowsA, colsA, "Matrix A");
-                get_matrix_input(b, rowsB, colsB, "Matrix B");
-                add_matrices(a, b, result, rowsA, colsA);
-                printf("\nResult (A + B):\n");
+                get_matrix_input(a, rowsA, colsA, "Matrix 1");
+                copy_matrix(a, result, rowsA, colsA);
+                for (int m = 2; m <= count; m++) {
+                    char label[20];
+                    snprintf(label, sizeof(label), "Matrix %d", m);
+                    get_matrix_input(b, rowsA, colsA, label);
+                    add_matrices(result, b, result, rowsA, colsA);
+                    printf("\nRunning total after Matrix %d:\n", m);
+                    print_matrix(result, rowsA, colsA);
+                }
+                printf("\nFinal Result (sum of %d matrices):\n", count);
                 print_matrix(result, rowsA, colsA);
                 save_last_result(result, rowsA, colsA);
                 break;
+            }
 
-            case 2:
-                printf("Enter rows and columns of Matrix A: ");
+            case 2: {
+                int count;
+                double temp[MAX_SIZE][MAX_SIZE];
+                printf("How many matrices do you want to multiply (2 or more)? ");
+                scanf("%d", &count);
+                printf("Enter rows and columns of Matrix 1: ");
                 scanf("%d %d", &rowsA, &colsA);
-                printf("Enter rows and columns of Matrix B: ");
-                scanf("%d %d", &rowsB, &colsB);
-                if (colsA != rowsB) {
-                    printf("Error: columns of A must equal rows of B for multiplication.\n");
-                    break;
+                get_matrix_input(a, rowsA, colsA, "Matrix 1");
+                copy_matrix(a, result, rowsA, colsA);
+                int curRows = rowsA, curCols = colsA;
+                int ok = 1;
+                for (int m = 2; m <= count; m++) {
+                    char label[20];
+                    snprintf(label, sizeof(label), "Matrix %d", m);
+                    printf("Enter rows and columns of Matrix %d: ", m);
+                    scanf("%d %d", &rowsB, &colsB);
+                    if (curCols != rowsB) {
+                        printf("Error: columns of running result (%d) must equal rows of Matrix %d (%d).\n",
+                               curCols, m, rowsB);
+                        ok = 0;
+                        break;
+                    }
+                    get_matrix_input(b, rowsB, colsB, label);
+                    multiply_matrices(result, b, temp, curRows, curCols, colsB);
+                    copy_matrix(temp, result, curRows, colsB);
+                    curCols = colsB;
+                    printf("\nRunning product after Matrix %d:\n", m);
+                    print_matrix(result, curRows, curCols);
                 }
-                get_matrix_input(a, rowsA, colsA, "Matrix A");
-                get_matrix_input(b, rowsB, colsB, "Matrix B");
-                multiply_matrices(a, b, result, rowsA, colsA, colsB);
-                printf("\nResult (A x B):\n");
-                print_matrix(result, rowsA, colsB);
-                save_last_result(result, rowsA, colsB);
+                if (ok) {
+                    printf("\nFinal Result (product of %d matrices):\n", count);
+                    print_matrix(result, curRows, curCols);
+                    save_last_result(result, curRows, curCols);
+                }
                 break;
+            }
 
             case 3:
                 printf("Enter rows and columns of the matrix: ");
@@ -436,17 +466,27 @@ int main() {
                 save_last_result(result, colsA, rowsA);
                 break;
 
-            case 4:
-                printf("Enter rows and columns for both matrices (must match): ");
+            case 4: {
+                int count;
+                printf("How many matrices do you want to subtract (2 or more)? ");
+                scanf("%d", &count);
+                printf("Enter rows and columns (all matrices must match): ");
                 scanf("%d %d", &rowsA, &colsA);
-                rowsB = rowsA; colsB = colsA;
-                get_matrix_input(a, rowsA, colsA, "Matrix A");
-                get_matrix_input(b, rowsB, colsB, "Matrix B");
-                subtract_matrices(a, b, result, rowsA, colsA);
-                printf("\nResult (A - B):\n");
+                get_matrix_input(a, rowsA, colsA, "Matrix 1");
+                copy_matrix(a, result, rowsA, colsA);
+                for (int m = 2; m <= count; m++) {
+                    char label[20];
+                    snprintf(label, sizeof(label), "Matrix %d", m);
+                    get_matrix_input(b, rowsA, colsA, label);
+                    subtract_matrices(result, b, result, rowsA, colsA);
+                    printf("\nRunning result after subtracting Matrix %d:\n", m);
+                    print_matrix(result, rowsA, colsA);
+                }
+                printf("\nFinal Result (Matrix1 - Matrix2 - ... - Matrix%d):\n", count);
                 print_matrix(result, rowsA, colsA);
                 save_last_result(result, rowsA, colsA);
                 break;
+            }
 
             case 5: {
                 double scalar;
@@ -473,17 +513,29 @@ int main() {
                 break;
             }
 
-            case 7:
-                printf("Enter rows and columns for both matrices (must match): ");
+            case 7: {
+                int count;
+                printf("How many matrices do you want to compare (2 or more)? ");
+                scanf("%d", &count);
+                printf("Enter rows and columns (all matrices must match): ");
                 scanf("%d %d", &rowsA, &colsA);
-                rowsB = rowsA; colsB = colsA;
-                get_matrix_input(a, rowsA, colsA, "Matrix A");
-                get_matrix_input(b, rowsB, colsB, "Matrix B");
-                if (compare_matrices(a, b, rowsA, colsA))
-                    printf("\nThe matrices are EQUAL.\n");
+                get_matrix_input(a, rowsA, colsA, "Matrix 1");
+                int all_equal = 1;
+                for (int m = 2; m <= count; m++) {
+                    char label[20];
+                    snprintf(label, sizeof(label), "Matrix %d", m);
+                    get_matrix_input(b, rowsA, colsA, label);
+                    if (!compare_matrices(a, b, rowsA, colsA)) {
+                        printf("Matrix 1 and Matrix %d are NOT equal.\n", m);
+                        all_equal = 0;
+                    }
+                }
+                if (all_equal)
+                    printf("\nAll %d matrices are EQUAL.\n", count);
                 else
-                    printf("\nThe matrices are NOT equal.\n");
+                    printf("\nThe matrices are NOT all equal.\n");
                 break;
+            }
 
             case 8: {
                 int n;
