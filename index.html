@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Engine Studio - Professional Linear Algebra Suite</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- MathJax for rendering LaTeX math formulas -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <span>[M]</span>
+                </div>
+                <div>
+                    <h1>Matrix Engine Studio</h1>
+                    <p>Linear Algebra & Matrix Computing Web App</p>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <!-- Live Visitor Counter Badge -->
+                <div class="visitor-badge" id="visitorBadge" title="Total Page Visits">
+                    <span class="visitor-icon">👁️</span>
+                    <span id="visitorCount">Visits: ...</span>
+                </div>
+
+                <!-- Preset Matrix Loader -->
+                <div class="preset-dropdown-wrap">
+                    <select id="presetSelect" class="select-input">
+                        <option value="" disabled selected>⚡ Load Preset Examples</option>
+                        <option value="rotation">2D Rotation (45°)</option>
+                        <option value="hilbert">Hilbert Matrix (3x3)</option>
+                        <option value="system">Linear System (3x3)</option>
+                        <option value="singular">Singular Matrix (Det = 0)</option>
+                        <option value="identity3">Identity Matrix (3x3)</option>
+                        <option value="eigen2">2x2 Eigenvalue Demo</option>
+                        <option value="eigen3">3x3 Eigenvalue Demo</option>
+                    </select>
+                </div>
+
+                <!-- Memory Buffer Status -->
+                <div class="memory-badge" id="memoryBadge">
+                    <span class="pulse-dot"></span>
+                    <span id="memoryText">Memory Empty</span>
+                    <button class="btn-sm btn-ghost" id="clearMemoryBtn" style="display:none;" title="Clear Memory Buffer">✕</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="workspace-grid">
+            <!-- Sidebar: Operations Menu -->
+            <aside class="sidebar-card glass-panel">
+                <h2>Operations (18)</h2>
+                
+                <div class="op-category">Basic Operations</div>
+                <div class="op-group">
+                    <button class="op-btn active" data-op="1"><span class="op-num">1</span> Add Matrices</button>
+                    <button class="op-btn" data-op="4"><span class="op-num">4</span> Subtract Matrices</button>
+                    <button class="op-btn" data-op="2"><span class="op-num">2</span> Multiply Matrices</button>
+                    <button class="op-btn" data-op="5"><span class="op-num">5</span> Scalar Multiply</button>
+                    <button class="op-btn" data-op="3"><span class="op-num">3</span> Transpose Matrix</button>
+                    <button class="op-btn" data-op="6"><span class="op-num">6</span> Identity Matrix</button>
+                    <button class="op-btn" data-op="7"><span class="op-num">7</span> Compare Matrices</button>
+                </div>
+
+                <div class="op-category">Matrix Properties</div>
+                <div class="op-group">
+                    <button class="op-btn" data-op="8"><span class="op-num">8</span> Determinant</button>
+                    <button class="op-btn" data-op="9"><span class="op-num">9</span> Inverse Matrix</button>
+                    <button class="op-btn" data-op="10"><span class="op-num">10</span> Matrix Rank</button>
+                    <button class="op-btn" data-op="11"><span class="op-num">11</span> Trace</button>
+                    <button class="op-btn" data-op="12"><span class="op-num">12</span> Adjoint</button>
+                    <button class="op-btn" data-op="13"><span class="op-num">13</span> Cofactor Matrix</button>
+                </div>
+
+                <div class="op-category">Advanced & Systems</div>
+                <div class="op-group">
+                    <button class="op-btn" data-op="14"><span class="op-num">14</span> Gaussian Elimination</button>
+                    <button class="op-btn" data-op="15"><span class="op-num">15</span> LU Decomposition</button>
+                    <button class="op-btn" data-op="16"><span class="op-num">16</span> Matrix Exponentiation</button>
+                    <button class="op-btn" data-op="17"><span class="op-num">17</span> Solve System Ax = b</button>
+                    <button class="op-btn" data-op="18"><span class="op-num">18</span> Eigenvalues (2x2 / 3x3)</button>
+                </div>
+
+                <div class="keyboard-tip">
+                    <small>💡 <strong>Keyboard Shortcuts:</strong> Use <code>Arrow Keys</code> or <code>Enter</code> to navigate grid cells seamlessly.</small>
+                </div>
+            </aside>
+
+            <!-- Center/Right Content Area -->
+            <section class="main-content">
+                <!-- Operation Config Header Bar -->
+                <div class="card glass-panel" id="opConfigCard">
+                    <div class="op-header">
+                        <div>
+                            <h2 id="currentOpTitle">1. Add Matrices</h2>
+                            <div class="op-description" id="opDescription">Computes element-wise sum of two or more matrices with identical dimensions.</div>
+                        </div>
+                        <span class="badge" id="opBadge">Matching Dimensions</span>
+                    </div>
+
+                    <!-- Dynamic Parameters Bar -->
+                    <div class="param-row" id="paramRow" style="display:none;"></div>
+                </div>
+
+                <!-- Input Matrices Grid -->
+                <div class="matrices-input-grid" id="matricesInputGrid">
+                    <!-- Matrix Cards populated by JS -->
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="action-bar">
+                    <button class="btn btn-primary" id="computeBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        Compute Result
+                    </button>
+                    <button class="btn btn-secondary" id="fillRandomBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                        Random Values
+                    </button>
+                    <button class="btn btn-secondary" id="resetInputsBtn">Clear All</button>
+                </div>
+
+                <!-- Result Card -->
+                <div class="card glass-panel result-card" id="resultCard" style="display:none;">
+                    <div class="result-header">
+                        <h3>Calculation Output & Steps</h3>
+                        <div class="result-actions">
+                            <button class="btn-sm btn-accent" id="useResultAsInputBtn">
+                                💾 Store to Memory
+                            </button>
+                            <button class="btn-sm btn-ghost" id="copyResultTextBtn">📋 Copy Text</button>
+                            <button class="btn-sm btn-ghost" id="copyLatexBtn">∑ Copy LaTeX</button>
+                        </div>
+                    </div>
+
+                    <!-- Tabs for Output / Step-by-Step Breakdown -->
+                    <div class="result-tabs">
+                        <button class="tab-btn active" id="tabOutputBtn">Final Result</button>
+                        <button class="tab-btn" id="tabStepsBtn">Step-by-Step Solution</button>
+                    </div>
+                    
+                    <div class="result-content" id="resultContent">
+                        <!-- Rendered Matrix / Output -->
+                    </div>
+                    <div class="result-content" id="resultStepsContent" style="display:none;">
+                        <!-- Step by step math breakdown -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="matrix.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
