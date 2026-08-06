@@ -1,0 +1,29 @@
+{
+  "name": "matrix-engine-studio",
+  "version": "1.0.0",
+  "description": "Matrix Engine Studio - Professional Linear Algebra Suite",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"No tests specified\"",
+    "dev": "echo \"Open index.html in a browser to run the application\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sibanandsahu38/matrix_manipulate.git"
+  },
+  "keywords": [
+    "matrix",
+    "linear-algebra",
+    "mathematics",
+    "analytics"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sibanandsahu38/matrix_manipulate/issues"
+  },
+  "homepage": "https://github.com/sibanandsahu38/matrix_manipulate#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
