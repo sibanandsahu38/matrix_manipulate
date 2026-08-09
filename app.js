@@ -1,19 +1,41 @@
 document.addEventListener("DOMContentLoaded", () => {
     let currentOp = 1;
     let matrixData = {
-        A: [[complex(1, 0), complex(2, 0)], [complex(0, 0), complex(1.5, 0)]],
-        B: [[complex(5, 0), complex(6, 0)], [complex(7, 0), complex(8, 0)]]
+        A: [[complex(1, 0), complex(0.5, 0), complex(0, 0)], [complex(0, 0), complex(1.2, 0), complex(0.2, 0)], [complex(0, 0), complex(0, 0), complex(1, 0)]],
+        B: [[complex(1, 0), complex(0, 0), complex(0, 0)], [complex(0, 0), complex(1, 0), complex(0, 0)], [complex(0, 0), complex(0, 0), complex(1, 0)]]
     };
     let scalarVal = complex(2, 0);
     let powerVal = 2;
     let identityN = 3;
-    let vectorB = [complex(8, 0), complex(-11, 0)];
+    let vectorB = [complex(8, 0), complex(-11, 0), complex(-3, 0)];
     let matrixCount = 2;
 
     // DOM Elements
+    const themeSelect = document.getElementById("themeSelect");
     const visitorCountEl = document.getElementById("visitorCount");
     const opButtons = document.querySelectorAll(".op-btn");
 
+    // Theme Management
+    function initTheme() {
+        const savedTheme = localStorage.getItem("matrix_studio_theme") || "cyberpunk";
+        document.documentElement.setAttribute("data-theme", savedTheme);
+        if (themeSelect) themeSelect.value = savedTheme;
+    }
+
+    if (themeSelect) {
+        themeSelect.addEventListener("change", (e) => {
+            const theme = e.target.value;
+            document.documentElement.setAttribute("data-theme", theme);
+            localStorage.setItem("matrix_studio_theme", theme);
+            if (threeRenderer) {
+                threeRenderer.setClearColor(theme === "nordic" ? 0xe2e8f0 : (theme === "emerald" ? 0x030d0c : (theme === "synthwave" ? 0x10041d : (theme === "oled" ? 0x000000 : 0x080c14))));
+                render3DVisualizer();
+            }
+        });
+    }
+    initTheme();
+
+    // Visitor Counter
     function initVisitorCounter() {
         let visits = parseInt(localStorage.getItem("matrix_studio_visits") || "0", 10) + 1;
         localStorage.setItem("matrix_studio_visits", visits);
@@ -28,7 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch(() => {});
     }
-
     initVisitorCounter();
 
     const currentOpTitle = document.getElementById("currentOpTitle");
@@ -43,9 +64,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultContent = document.getElementById("resultContent");
     const resultStepsContent = document.getElementById("resultStepsContent");
     const resultVisualizerContent = document.getElementById("resultVisualizerContent");
+    const result3dVisualizerContent = document.getElementById("result3dVisualizerContent");
     const useResultAsInputBtn = document.getElementById("useResultAsInputBtn");
     const copyResultTextBtn = document.getElementById("copyResultTextBtn");
     const copyLatexBtn = document.getElementById("copyLatexBtn");
+    const exportPdfBtn = document.getElementById("exportPdfBtn");
     const memoryBadge = document.getElementById("memoryBadge");
     const memoryText = document.getElementById("memoryText");
     const clearMemoryBtn = document.getElementById("clearMemoryBtn");
@@ -53,8 +76,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const tabOutputBtn = document.getElementById("tabOutputBtn");
     const tabStepsBtn = document.getElementById("tabStepsBtn");
     const tabVisualizerBtn = document.getElementById("tabVisualizerBtn");
+    const tab3dVisualizerBtn = document.getElementById("tab3dVisualizerBtn");
 
-    // Visualizer DOM
+    // 2D Visualizer DOM
     const geoCanvas = document.getElementById("geoCanvas");
     const animTransformationBtn = document.getElementById("animTransformationBtn");
     const showGridCheck = document.getElementById("showGridCheck");
@@ -63,11 +87,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const resetVizZoomBtn = document.getElementById("resetVizZoomBtn");
     const vizLegend = document.getElementById("vizLegend");
 
+    // 3D Visualizer DOM
+    const threeContainer = document.getElementById("threeContainer");
+    const anim3dTransformationBtn = document.getElementById("anim3dTransformationBtn");
+    const show3dCubeCheck = document.getElementById("show3dCubeCheck");
+    const show3dAxesCheck = document.getElementById("show3dAxesCheck");
+    const show3dEigenCheck = document.getElementById("show3dEigenCheck");
+    const reset3dViewBtn = document.getElementById("reset3dViewBtn");
+
     let lastComputedResultMat = null;
     let lastComputedLatex = "";
-    let animProgress = 1.0; // 0 = Identity, 1 = Full Matrix A
+    let animProgress = 1.0;
     let animReqId = null;
-    let viewZoom = 40.0; // pixels per unit
+    let viewZoom = 40.0;
+
+    // Three.js State
+    let threeScene, threeCamera, threeRenderer, threeControls;
+    let threeCubeMesh, threeArrows = [], threeEigenLines = [];
+    let anim3dProgress = 1.0;
+    let anim3dReqId = null;
 
     const opConfigs = {
         1: { title: "➕ Add Matrices", desc: "Computes element-wise sum of complex matrices.", badge: "Matching Dimensions", numMatrices: 2, allowMulti: true },
@@ -176,35 +214,45 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Tab switching
-    tabOutputBtn.addEventListener("click", () => {
-        tabOutputBtn.classList.add("active");
+    function hideAllTabs() {
+        tabOutputBtn.classList.remove("active");
         tabStepsBtn.classList.remove("active");
         tabVisualizerBtn.classList.remove("active");
-        resultContent.style.display = "block";
+        tab3dVisualizerBtn.classList.remove("active");
+        resultContent.style.display = "none";
         resultStepsContent.style.display = "none";
         resultVisualizerContent.style.display = "none";
+        result3dVisualizerContent.style.display = "none";
+    }
+
+    tabOutputBtn.addEventListener("click", () => {
+        hideAllTabs();
+        tabOutputBtn.classList.add("active");
+        resultContent.style.display = "block";
     });
 
     tabStepsBtn.addEventListener("click", () => {
+        hideAllTabs();
         tabStepsBtn.classList.add("active");
-        tabOutputBtn.classList.remove("active");
-        tabVisualizerBtn.classList.remove("active");
-        resultContent.style.display = "none";
         resultStepsContent.style.display = "block";
-        resultVisualizerContent.style.display = "none";
     });
 
     tabVisualizerBtn.addEventListener("click", () => {
+        hideAllTabs();
         tabVisualizerBtn.classList.add("active");
-        tabOutputBtn.classList.remove("active");
-        tabStepsBtn.classList.remove("active");
-        resultContent.style.display = "none";
-        resultStepsContent.style.display = "none";
         resultVisualizerContent.style.display = "block";
         render2DVisualizer();
     });
 
-    // Visualizer Controls
+    tab3dVisualizerBtn.addEventListener("click", () => {
+        hideAllTabs();
+        tab3dVisualizerBtn.classList.add("active");
+        result3dVisualizerContent.style.display = "block";
+        initThreeJs();
+        render3DVisualizer();
+    });
+
+    // 2D Controls
     animTransformationBtn.addEventListener("click", () => {
         animProgress = 0.0;
         if (animReqId) cancelAnimationFrame(animReqId);
@@ -227,6 +275,35 @@ document.addEventListener("DOMContentLoaded", () => {
     resetVizZoomBtn.addEventListener("click", () => {
         viewZoom = 40.0;
         render2DVisualizer();
+    });
+
+    // 3D Controls
+    anim3dTransformationBtn.addEventListener("click", () => {
+        anim3dProgress = 0.0;
+        if (anim3dReqId) cancelAnimationFrame(anim3dReqId);
+        function step3d() {
+            anim3dProgress += 0.02;
+            if (anim3dProgress >= 1.0) {
+                anim3dProgress = 1.0;
+                render3DVisualizer();
+            } else {
+                render3DVisualizer();
+                anim3dReqId = requestAnimationFrame(step3d);
+            }
+        }
+        anim3dReqId = requestAnimationFrame(step3d);
+    });
+
+    show3dCubeCheck.addEventListener("change", render3DVisualizer);
+    show3dAxesCheck.addEventListener("change", render3DVisualizer);
+    show3dEigenCheck.addEventListener("change", render3DVisualizer);
+    reset3dViewBtn.addEventListener("click", () => {
+        if (threeCamera && threeControls) {
+            threeCamera.position.set(4, 3, 5);
+            threeControls.target.set(0, 0, 0);
+            threeControls.update();
+            render3DVisualizer();
+        }
     });
 
     function updateMemoryBadge() {
@@ -318,6 +395,7 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("scalarInput").addEventListener("input", (e) => {
                 scalarVal = parseComplex(e.target.value);
                 if (resultVisualizerContent.style.display !== "none") render2DVisualizer();
+                if (result3dVisualizerContent.style.display !== "none") render3DVisualizer();
             });
         }
 
@@ -421,6 +499,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const c = parseInt(e.target.dataset.col, 10);
                 matrixData[key][r][c] = parseComplex(e.target.value);
                 if (resultVisualizerContent.style.display !== "none") render2DVisualizer();
+                if (result3dVisualizerContent.style.display !== "none") render3DVisualizer();
             });
 
             cell.addEventListener("keydown", (e) => {
@@ -515,6 +594,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         renderWorkspace();
         if (resultVisualizerContent.style.display !== "none") render2DVisualizer();
+        if (result3dVisualizerContent.style.display !== "none") render3DVisualizer();
     });
 
     resetInputsBtn.addEventListener("click", () => {
@@ -528,6 +608,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         renderWorkspace();
         if (resultVisualizerContent.style.display !== "none") render2DVisualizer();
+        if (result3dVisualizerContent.style.display !== "none") render3DVisualizer();
     });
 
     // Compute Handler
@@ -822,6 +903,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (resultVisualizerContent.style.display !== "none") {
                 render2DVisualizer();
             }
+            if (result3dVisualizerContent.style.display !== "none") {
+                render3DVisualizer();
+            }
 
         } catch (err) {
             resultContent.innerHTML = `<div class="result-text-block" style="color: var(--danger);">Error: ${err.message}</div>`;
@@ -842,17 +926,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         ctx.clearRect(0, 0, width, height);
 
-        // Background
-        ctx.fillStyle = "#080c14";
-        ctx.fillRect(0, 0, width, height);
-
-        // Get current 2D real components of Matrix A (using real part for 2D geometry)
         const a11_target = matrixData.A[0] && matrixData.A[0][0] ? matrixData.A[0][0].re : 1;
         const a12_target = matrixData.A[0] && matrixData.A[0][1] ? matrixData.A[0][1].re : 0;
         const a21_target = matrixData.A[1] && matrixData.A[1][0] ? matrixData.A[1][0].re : 0;
         const a22_target = matrixData.A[1] && matrixData.A[1][1] ? matrixData.A[1][1].re : 1;
 
-        // Interpolated matrix M(t) = (1-t)I + t*A
         const t = animProgress;
         const m11 = (1 - t) * 1 + t * a11_target;
         const m12 = (1 - t) * 0 + t * a12_target;
@@ -880,9 +958,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ctx.lineWidth = 1;
             const gridRange = 8;
 
-            // Faint grid lines
             for (let g = -gridRange; g <= gridRange; g++) {
-                // Vertical grid lines (constant x)
                 ctx.beginPath();
                 ctx.strokeStyle = (g === 0) ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.06)";
                 for (let py = -gridRange; py <= gridRange; py += 0.5) {
@@ -893,7 +969,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 ctx.stroke();
 
-                // Horizontal grid lines (constant y)
                 ctx.beginPath();
                 ctx.strokeStyle = (g === 0) ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.06)";
                 for (let px = -gridRange; px <= gridRange; px += 0.5) {
@@ -906,21 +981,20 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Draw Coordinate Axes
+        // Coordinate Axes
         ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
         ctx.lineWidth = 1.5;
-        // X axis
         ctx.beginPath();
         ctx.moveTo(0, originY);
         ctx.lineTo(width, originY);
         ctx.stroke();
-        // Y axis
+
         ctx.beginPath();
         ctx.moveTo(originX, 0);
         ctx.lineTo(originX, height);
         ctx.stroke();
 
-        // Draw Transformed Unit Square (Determinant Area)
+        // Transformed Unit Square Area
         const detArea = (m11 * m22 - m12 * m21);
         if (showAreaCheck.checked) {
             const p00 = toScreen(0, 0);
@@ -941,23 +1015,20 @@ document.addEventListener("DOMContentLoaded", () => {
             ctx.stroke();
         }
 
-        // Draw Basis Vectors i^ and j^
+        // Basis Vectors
         const e1 = transform(1, 0);
         const e2 = transform(0, 1);
-        drawArrow(ctx, toScreen(0, 0), toScreen(e1.x, e1.y), "#38bdf8", "A i^ (Col 1)", 3);
-        drawArrow(ctx, toScreen(0, 0), toScreen(e2.x, e2.y), "#818cf8", "A j^ (Col 2)", 3);
+        drawArrow(ctx, toScreen(0, 0), toScreen(e1.x, e1.y), "#38bdf8", "A i^", 3);
+        drawArrow(ctx, toScreen(0, 0), toScreen(e2.x, e2.y), "#818cf8", "A j^", 3);
 
-        // If operation is System Ax = b (Case 17), draw lines & solution point!
+        // Ax = b lines
         if (currentOp === 17 && vectorB.length >= 2) {
             const b1 = vectorB[0].re;
             const b2 = vectorB[1].re;
 
-            // Line 1: a11*x + a12*y = b1 => y = (b1 - a11*x) / a12
             drawEquationLine(ctx, a11_target, a12_target, b1, "#fbbf24", toScreen, scale);
-            // Line 2: a21*x + a22*y = b2 => y = (b2 - a21*x) / a22
             drawEquationLine(ctx, a21_target, a22_target, b2, "#34d399", toScreen, scale);
 
-            // Solution point x = A^-1 b
             const solX = solveLinearSystem(
                 [[complex(a11_target, 0), complex(a12_target, 0)], [complex(a21_target, 0), complex(a22_target, 0)]],
                 [complex(b1, 0), complex(b2, 0)]
@@ -978,7 +1049,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Draw Real Eigenvectors & Eigenlines
+        // 2D Eigenlines
         if (showEigenCheck.checked && matrixData.A.length === 2 && matrixData.A[0].length === 2) {
             const realA = [[a11_target, a12_target], [a21_target, a22_target]];
             const evs = eigen2x2([[complex(a11_target, 0), complex(a12_target, 0)], [complex(a21_target, 0), complex(a22_target, 0)]]);
@@ -986,7 +1057,6 @@ document.addEventListener("DOMContentLoaded", () => {
             evs.forEach((e, idx) => {
                 if (Math.abs(e.im) < EPS) {
                     const lambda = e.re;
-                    // Find eigenvector (A - lambda I) v = 0
                     let vx = 1, vy = 0;
                     if (Math.abs(realA[0][1]) > EPS) {
                         vx = 1;
@@ -998,7 +1068,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     const len = Math.hypot(vx, vy);
                     if (len > EPS) {
                         vx /= len; vy /= len;
-                        // Draw infinite dashed eigenline
                         const p1 = toScreen(-10 * vx, -10 * vy);
                         const p2 = toScreen(10 * vx, 10 * vy);
                         ctx.beginPath();
@@ -1010,7 +1079,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         ctx.stroke();
                         ctx.setLineDash([]);
 
-                        // Transformed eigenvector A v = lambda v
                         const vTrans = transform(vx, vy);
                         drawArrow(ctx, toScreen(0,0), toScreen(vTrans.x, vTrans.y), idx === 0 ? "#fbbf24" : "#f472b6", `v${idx+1} (λ=${lambda.toFixed(2)})`, 2.5);
                     }
@@ -1018,7 +1086,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        // Legend Badges
         vizLegend.innerHTML = `
             <div class="legend-item"><div class="legend-color" style="background:#38bdf8;"></div>A i^ (${e1.x.toFixed(2)}, ${e1.y.toFixed(2)})</div>
             <div class="legend-item"><div class="legend-color" style="background:#818cf8;"></div>A j^ (${e2.x.toFixed(2)}, ${e2.y.toFixed(2)})</div>
@@ -1076,6 +1143,214 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         ctx.stroke();
     }
+
+    /* =========================================================
+       3D THREE.JS ANIMATION ENGINE
+       ========================================================= */
+
+    function initThreeJs() {
+        if (!window.THREE || threeRenderer) return;
+
+        const width = threeContainer.clientWidth || 700;
+        const height = threeContainer.clientHeight || 450;
+
+        threeScene = new THREE.Scene();
+        const currentTheme = document.documentElement.getAttribute("data-theme") || "cyberpunk";
+        const bgColor = currentTheme === "nordic" ? 0xe2e8f0 : (currentTheme === "emerald" ? 0x030d0c : (currentTheme === "synthwave" ? 0x10041d : (currentTheme === "oled" ? 0x000000 : 0x080c14)));
+        threeScene.background = new THREE.Color(bgColor);
+
+        threeCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        threeCamera.position.set(4, 3, 5);
+
+        threeRenderer = new THREE.WebGLRenderer({ antialias: true });
+        threeRenderer.setSize(width, height);
+        threeRenderer.setPixelRatio(window.devicePixelRatio);
+        threeContainer.appendChild(threeRenderer.domElement);
+
+        if (window.THREE.OrbitControls) {
+            threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
+            threeControls.enableDamping = true;
+            threeControls.dampingFactor = 0.05;
+        }
+
+        // 3D Ambient & Directional Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        threeScene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 10, 7);
+        threeScene.add(dirLight);
+
+        // 3D Coordinate Grid
+        const gridHelper = new THREE.GridHelper(10, 10, 0x38bdf8, 0x334155);
+        gridHelper.position.y = 0;
+        threeScene.add(gridHelper);
+
+        window.addEventListener("resize", () => {
+            if (threeRenderer && threeContainer) {
+                const w = threeContainer.clientWidth;
+                const h = threeContainer.clientHeight || 450;
+                threeCamera.aspect = w / h;
+                threeCamera.updateProjectionMatrix();
+                threeRenderer.setSize(w, h);
+            }
+        });
+
+        function animateLoop() {
+            requestAnimationFrame(animateLoop);
+            if (threeControls) threeControls.update();
+            if (threeRenderer && threeScene && threeCamera) {
+                threeRenderer.render(threeScene, threeCamera);
+            }
+        }
+        animateLoop();
+    }
+
+    function render3DVisualizer() {
+        if (!threeScene) return;
+
+        // Clean previous dynamic 3D elements
+        if (threeCubeMesh) {
+            threeScene.remove(threeCubeMesh);
+            threeCubeMesh = null;
+        }
+        threeArrows.forEach(arrow => threeScene.remove(arrow));
+        threeArrows = [];
+        threeEigenLines.forEach(line => threeScene.remove(line));
+        threeEigenLines = [];
+
+        // Extract 3D matrix real coefficients from Matrix A
+        const r1 = [matrixData.A[0] ? matrixData.A[0][0].re : 1, matrixData.A[0] && matrixData.A[0][1] ? matrixData.A[0][1].re : 0, matrixData.A[0] && matrixData.A[0][2] ? matrixData.A[0][2].re : 0];
+        const r2 = [matrixData.A[1] ? matrixData.A[1][0].re : 0, matrixData.A[1] && matrixData.A[1][1] ? matrixData.A[1][1].re : 1, matrixData.A[1] && matrixData.A[1][2] ? matrixData.A[1][2].re : 0];
+        const r3 = [matrixData.A[2] ? matrixData.A[2][0].re : 0, matrixData.A[2] && matrixData.A[2][1] ? matrixData.A[2][1].re : 0, matrixData.A[2] && matrixData.A[2][2] ? matrixData.A[2][2].re : 1];
+
+        const t = anim3dProgress;
+
+        // Interpolated Matrix M(t) = (1-t)I + tA
+        const v1 = new THREE.Vector3((1-t)*1 + t*r1[0], (1-t)*0 + t*r2[0], (1-t)*0 + t*r3[0]);
+        const v2 = new THREE.Vector3((1-t)*0 + t*r1[1], (1-t)*1 + t*r2[1], (1-t)*0 + t*r3[1]);
+        const v3 = new THREE.Vector3((1-t)*0 + t*r1[2], (1-t)*0 + t*r2[2], (1-t)*1 + t*r3[2]);
+
+        const origin = new THREE.Vector3(0, 0, 0);
+
+        // Draw 3D Transformed Parallelepiped Unit Cube
+        if (show3dCubeCheck.checked) {
+            const p000 = origin;
+            const p100 = v1;
+            const p010 = v2;
+            const p001 = v3;
+            const p110 = new THREE.Vector3().addVectors(v1, v2);
+            const p101 = new THREE.Vector3().addVectors(v1, v3);
+            const p011 = new THREE.Vector3().addVectors(v2, v3);
+            const p111 = new THREE.Vector3().addVectors(v1, v2).add(v3);
+
+            // 12 edges of parallelepiped
+            const edgePoints = [
+                p000, p100,  p000, p010,  p000, p001,
+                p100, p110,  p100, p101,  p010, p110,
+                p010, p011,  p001, p101,  p001, p011,
+                p110, p111,  p101, p111,  p011, p111
+            ];
+
+            const cubeGeom = new THREE.BufferGeometry().setFromPoints(edgePoints);
+            const cubeMat = new THREE.LineBasicMaterial({ color: 0xa855f7, linewidth: 2 });
+            threeCubeMesh = new THREE.LineSegments(cubeGeom, cubeMat);
+            threeScene.add(threeCubeMesh);
+        }
+
+        // Draw 3D Basis Vector Arrows
+        if (show3dAxesCheck.checked) {
+            const create3DArrow = (dirVec, colorHex, length) => {
+                const dir = dirVec.clone().normalize();
+                const len = Math.max(0.1, dirVec.length());
+                const arrow = new THREE.ArrowHelper(dir, origin, len, colorHex, Math.min(0.4, len * 0.3), Math.min(0.2, len * 0.15));
+                threeScene.add(arrow);
+                threeArrows.push(arrow);
+            };
+
+            create3DArrow(v1, 0xef4444); // Red v1
+            create3DArrow(v2, 0x10b981); // Green v2
+            create3DArrow(v3, 0x38bdf8); // Blue v3
+        }
+    }
+
+    /* =========================================================
+       PDF EXPORT ENGINE
+       ========================================================= */
+
+    exportPdfBtn.addEventListener("click", () => {
+        const cfg = opConfigs[currentOp];
+        const pdfContainer = document.getElementById("pdfExportContainer");
+
+        // Format Input Matrices HTML for PDF Table
+        let inputsHtml = "";
+        const labels = ["A", "B", "C", "D"];
+        const numMats = cfg.allowMulti ? matrixCount : cfg.numMatrices;
+
+        for (let m = 0; m < numMats; m++) {
+            const key = labels[m];
+            const mat = matrixData[key];
+            if (mat) {
+                inputsHtml += `
+                    <h4>Matrix ${key} (${mat.length} × ${mat[0].length}):</h4>
+                    <table class="pdf-table">
+                        ${mat.map(row => `<tr>${row.map(val => `<td>${formatComplex(val)}</td>`).join('')}</tr>`).join('')}
+                    </table>
+                `;
+            }
+        }
+
+        pdfContainer.innerHTML = `
+            <div class="pdf-document">
+                <div class="pdf-header">
+                    <h1>Matrix Engine Studio — Computation Report</h1>
+                    <p style="color:#64748b; font-size: 0.9rem;">Generated: ${new Date().toLocaleString()} | Operation: ${cfg.title}</p>
+                </div>
+
+                <div class="pdf-section">
+                    <h3>1. Operation Details</h3>
+                    <p><strong>Name:</strong> ${cfg.title}</p>
+                    <p><strong>Description:</strong> ${cfg.desc}</p>
+                </div>
+
+                <div class="pdf-section">
+                    <h3>2. Input Matrices</h3>
+                    ${inputsHtml}
+                </div>
+
+                <div class="pdf-section">
+                    <h3>3. Output Result</h3>
+                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:1rem;">
+                        ${resultContent.innerHTML}
+                    </div>
+                </div>
+
+                <div class="pdf-section">
+                    <h3>4. Step-by-Step Mathematical Derivation</h3>
+                    <div>
+                        ${resultStepsContent.innerHTML}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        if (window.html2pdf) {
+            const opt = {
+                margin:       10,
+                filename:     `Matrix_Report_${cfg.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().from(pdfContainer).set(opt).save();
+        } else {
+            // Fallback print window
+            const printWin = window.open('', '', 'width=800,height=600');
+            printWin.document.write('<html><head><title>Matrix Computation Report</title><style>' + document.querySelector('style, link[rel="stylesheet"]').outerHTML + '</style></head><body>' + pdfContainer.innerHTML + '</body></html>');
+            printWin.document.close();
+            printWin.focus();
+            printWin.print();
+        }
+    });
 
     function formatMatrixHtml(mat) {
         const cols = mat[0].length;

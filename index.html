@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="cyberpunk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +10,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- MathJax for rendering LaTeX math formulas -->
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+    <!-- Three.js & OrbitControls for 3D Matrix Animation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- html2pdf.js for formatted PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -27,6 +32,17 @@
             </div>
             
             <div class="header-right">
+                <!-- Theme Switcher -->
+                <div class="theme-selector-wrap">
+                    <select id="themeSelect" class="select-input" title="Choose UI Theme">
+                        <option value="cyberpunk">🌌 Cyberpunk Dark</option>
+                        <option value="emerald">🌲 Emerald Matrix</option>
+                        <option value="synthwave">🌅 Synthwave Sunset</option>
+                        <option value="nordic">❄️ Nordic Light</option>
+                        <option value="oled">🌑 Monochrome OLED</option>
+                    </select>
+                </div>
+
                 <!-- Live Visitor Counter Badge -->
                 <div class="visitor-badge" id="visitorBadge" title="Total Page Visits">
                     <span class="visitor-icon">👁️</span>
@@ -105,7 +121,7 @@
                 <div class="card glass-panel" id="opConfigCard">
                     <div class="op-header">
                         <div>
-                            <h2 id="currentOpTitle">1. Add Matrices</h2>
+                            <h2 id="currentOpTitle">➕ Add Matrices</h2>
                             <div class="op-description" id="opDescription">Computes element-wise sum of two or more matrices with identical dimensions.</div>
                         </div>
                         <span class="badge" id="opBadge">Matching Dimensions</span>
@@ -136,34 +152,41 @@
                 <!-- Result Card -->
                 <div class="card glass-panel result-card" id="resultCard" style="display:none;">
                     <div class="result-header">
-                        <h3>Calculation Output & Steps</h3>
+                        <h3>Calculation Output & Visualization</h3>
                         <div class="result-actions">
+                            <button class="btn-sm btn-accent" id="exportPdfBtn" title="Download Formatted PDF Report">
+                                📄 Export PDF
+                            </button>
                             <button class="btn-sm btn-accent" id="useResultAsInputBtn">
                                 💾 Store to Memory
                             </button>
                             <button class="btn-sm btn-ghost" id="copyResultTextBtn">📋 Copy Text</button>
-                            <button class="btn-sm btn-ghost" id="copyLatexBtn">��� Copy LaTeX</button>
+                            <button class="btn-sm btn-ghost" id="copyLatexBtn">∑ Copy LaTeX</button>
                         </div>
                     </div>
 
-                    <!-- Tabs for Output / Step-by-Step Breakdown / 2D Visualizer -->
+                    <!-- Tabs for Output / Step-by-Step Breakdown / 2D / 3D Visualizer -->
                     <div class="result-tabs">
                         <button class="tab-btn active" id="tabOutputBtn">Final Result</button>
                         <button class="tab-btn" id="tabStepsBtn">Step-by-Step Solution</button>
-                        <button class="tab-btn" id="tabVisualizerBtn">📐 2D Geometric Visualizer</button>
+                        <button class="tab-btn" id="tabVisualizerBtn">📐 2D Visualizer</button>
+                        <button class="tab-btn" id="tab3dVisualizerBtn">🧊 3D Animation</button>
                     </div>
                     
+                    <!-- Tab 1: Final Result -->
                     <div class="result-content" id="resultContent">
                         <!-- Rendered Matrix / Output -->
                     </div>
+
+                    <!-- Tab 2: Step by step math breakdown -->
                     <div class="result-content" id="resultStepsContent" style="display:none;">
                         <!-- Step by step math breakdown -->
                     </div>
                     
-                    <!-- 2D Geometric Visualizer Panel -->
+                    <!-- Tab 3: 2D Geometric Visualizer Panel -->
                     <div class="result-content" id="resultVisualizerContent" style="display:none;">
                         <div class="visualizer-controls">
-                            <button class="btn-sm btn-primary" id="animTransformationBtn">▶ Animate Transformation</button>
+                            <button class="btn-sm btn-primary" id="animTransformationBtn">▶ Animate 2D</button>
                             <label class="viz-toggle"><input type="checkbox" id="showGridCheck" checked> Deformed Grid</label>
                             <label class="viz-toggle"><input type="checkbox" id="showEigenCheck" checked> Eigenlines</label>
                             <label class="viz-toggle"><input type="checkbox" id="showAreaCheck" checked> Determinant Area</label>
@@ -176,7 +199,31 @@
                             <!-- Visualizer legend badges -->
                         </div>
                     </div>
+
+                    <!-- Tab 4: 3D Animation Visualizer Panel -->
+                    <div class="result-content" id="result3dVisualizerContent" style="display:none;">
+                        <div class="visualizer-controls">
+                            <button class="btn-sm btn-primary" id="anim3dTransformationBtn">▶ Animate 3D Transformation</button>
+                            <label class="viz-toggle"><input type="checkbox" id="show3dCubeCheck" checked> Parallelepiped (Det Volume)</label>
+                            <label class="viz-toggle"><input type="checkbox" id="show3dAxesCheck" checked> 3D Basis Vectors</label>
+                            <label class="viz-toggle"><input type="checkbox" id="show3dEigenCheck" checked> 3D Eigenlines</label>
+                            <button class="btn-sm btn-ghost" id="reset3dViewBtn">🔄 Reset Camera</button>
+                        </div>
+                        <div class="canvas-wrapper" id="canvas3dWrapper" style="height:480px; position:relative;">
+                            <div id="threeContainer" style="width:100%; height:100%;"></div>
+                            <div class="three-instruction-badge">🖱️ Drag to rotate 3D view | Scroll to zoom | Right click to pan</div>
+                        </div>
+                        <div class="viz-legend" id="viz3dLegend">
+                            <div class="legend-item"><div class="legend-color" style="background:#ef4444;"></div>X Axis / Vector v1</div>
+                            <div class="legend-item"><div class="legend-color" style="background:#10b981;"></div>Y Axis / Vector v2</div>
+                            <div class="legend-item"><div class="legend-color" style="background:#38bdf8;"></div>Z Axis / Vector v3</div>
+                            <div class="legend-item"><div class="legend-color" style="background:rgba(168,85,247,0.5);"></div>Volume = |det(A)|</div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Printable PDF Template (Hidden off-screen for clean generation) -->
+                <div id="pdfExportContainer" style="display:none;"></div>
             </section>
         </main>
     </div>
@@ -184,7 +231,5 @@
     <!-- Scripts -->
     <script src="matrix.js"></script>
     <script src="app.js"></script>
-    <!-- Vercel Web Analytics -->
-    <script type="module" src="analytics.js"></script>
 </body>
 </html>
