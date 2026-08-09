@@ -1274,12 +1274,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* =========================================================
-       PDF EXPORT ENGINE
+       PDF EXPORT ENGINE (Preview Modal & Direct Download)
        ========================================================= */
 
+    const pdfModal = document.getElementById("pdfModal");
+    const pdfReportPaper = document.getElementById("pdfReportPaper");
+    const modalPrintBtn = document.getElementById("modalPrintBtn");
+    const modalDownloadBtn = document.getElementById("modalDownloadBtn");
+    const modalCloseBtn = document.getElementById("modalCloseBtn");
+
     exportPdfBtn.addEventListener("click", () => {
+        // Auto-compute if result is not currently visible
+        if (resultCard.style.display === "none" || !resultContent.innerHTML.trim()) {
+            computeBtn.click();
+        }
+
         const cfg = opConfigs[currentOp];
-        const pdfContainer = document.getElementById("pdfExportContainer");
 
         // Format Input Matrices HTML for PDF Table
         let inputsHtml = "";
@@ -1291,64 +1301,140 @@ document.addEventListener("DOMContentLoaded", () => {
             const mat = matrixData[key];
             if (mat) {
                 inputsHtml += `
-                    <h4>Matrix ${key} (${mat.length} × ${mat[0].length}):</h4>
-                    <table class="pdf-table">
-                        ${mat.map(row => `<tr>${row.map(val => `<td>${formatComplex(val)}</td>`).join('')}</tr>`).join('')}
-                    </table>
+                    <div style="margin-bottom: 14px;">
+                        <div style="color: #000000; font-size: 14px; font-weight: 700; margin-bottom: 6px;">Matrix ${key} (${mat.length} × ${mat[0].length}):</div>
+                        <table style="border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+                            ${mat.map(row => `
+                                <tr>
+                                    ${row.map(val => `<td style="border: 2px solid #000000; padding: 6px 14px; text-align: center; background: #ffffff; color: #000000; font-weight: 600;">${formatComplex(val)}</td>`).join('')}
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </div>
                 `;
             }
         }
 
-        pdfContainer.innerHTML = `
-            <div class="pdf-document">
-                <div class="pdf-header">
-                    <h1>Matrix Engine Studio — Computation Report</h1>
-                    <p style="color:#64748b; font-size: 0.9rem;">Generated: ${new Date().toLocaleString()} | Operation: ${cfg.title}</p>
+        if (cfg.hasScalar) {
+            inputsHtml += `<p style="margin-top: 6px; font-size: 13px; color:#000000;"><strong>Scalar Value (k):</strong> <code style="background:#f1f5f9; border: 1px solid #cbd5e1; padding:2px 6px; border-radius:4px; font-weight:700;">${formatComplex(scalarVal)}</code></p>`;
+        }
+        if (cfg.hasPower) {
+            inputsHtml += `<p style="margin-top: 6px; font-size: 13px; color:#000000;"><strong>Matrix Power (p):</strong> <code style="background:#f1f5f9; border: 1px solid #cbd5e1; padding:2px 6px; border-radius:4px; font-weight:700;">${powerVal}</code></p>`;
+        }
+        if (cfg.hasVectorB) {
+            inputsHtml += `<p style="margin-top: 6px; font-size: 13px; color:#000000;"><strong>Vector b:</strong> [${vectorB.map(formatComplex).join(', ')}]</p>`;
+        }
+
+        // Format Output Result for PDF in pure solid black text
+        let outputResultHtml = "";
+        if (lastComputedResultMat && Array.isArray(lastComputedResultMat) && lastComputedResultMat.length > 0 && Array.isArray(lastComputedResultMat[0])) {
+            const rows = lastComputedResultMat.length;
+            const cols = lastComputedResultMat[0].length;
+            outputResultHtml = `
+                <div style="margin-bottom: 6px; font-size: 14px; font-weight: 700; color: #000000;">Result Matrix (${rows} × ${cols}):</div>
+                <table style="border-collapse: collapse; margin-top: 4px; font-family: 'JetBrains Mono', monospace; font-size: 14px;">
+                    ${lastComputedResultMat.map(row => `
+                        <tr>
+                            ${row.map(val => `<td style="border: 2px solid #000000; padding: 8px 16px; text-align: center; background: #ffffff; color: #000000; font-weight: 700;">${formatComplex(val)}</td>`).join('')}
+                        </tr>
+                    `).join('')}
+                </table>
+            `;
+        } else {
+            const rawResultText = resultContent.innerText || resultContent.textContent;
+            outputResultHtml = `
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; color: #000000; line-height: 1.6; white-space: pre-wrap;">
+                    ${rawResultText}
+                </div>
+            `;
+        }
+
+        // Clean step cards text with pure black text
+        const cleanStepsHtml = resultStepsContent.innerHTML
+            .replace(/var\(--primary\)/g, '#000000')
+            .replace(/color:\s*var\([^)]+\)/g, 'color: #000000')
+            .replace(/class="step-card"/g, 'style="border-left: 4px solid #000000; background: #f8fafc; padding: 10px 14px; margin-bottom: 10px; border-radius: 4px; color: #000000;"')
+            .replace(/class="step-title"/g, 'style="font-weight: 700; color: #000000; margin-bottom: 4px;"');
+
+        pdfReportPaper.innerHTML = `
+            <div>
+                <div style="border-bottom: 3px solid #000000; padding-bottom: 12px; margin-bottom: 20px;">
+                    <h1 style="color: #000000; font-size: 24px; font-weight: 800; margin: 0 0 6px 0;">Matrix Engine Studio — Computation Report</h1>
+                    <p style="color: #475569; font-size: 12px; margin: 0;">Generated: ${new Date().toLocaleString()} | Operation: ${cfg.title}</p>
                 </div>
 
-                <div class="pdf-section">
-                    <h3>1. Operation Details</h3>
-                    <p><strong>Name:</strong> ${cfg.title}</p>
-                    <p><strong>Description:</strong> ${cfg.desc}</p>
+                <div style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px 16px; border-radius: 8px;">
+                    <h3 style="color: #000000; font-size: 16px; font-weight: 700; margin: 0 0 4px 0;">1. Operation Summary</h3>
+                    <p style="margin: 0; font-size: 13px; color: #000000;"><strong>${cfg.title}</strong> — ${cfg.desc}</p>
                 </div>
 
-                <div class="pdf-section">
-                    <h3>2. Input Matrices</h3>
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #000000; font-size: 16px; font-weight: 700; border-bottom: 2px solid #000000; padding-bottom: 6px; margin-bottom: 10px;">2. Input Matrices</h3>
                     ${inputsHtml}
                 </div>
 
-                <div class="pdf-section">
-                    <h3>3. Output Result</h3>
-                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:1rem;">
-                        ${resultContent.innerHTML}
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #000000; font-size: 16px; font-weight: 700; border-bottom: 2px solid #000000; padding-bottom: 6px; margin-bottom: 10px;">3. Output Result</h3>
+                    <div style="background: #ffffff; border: 2px solid #000000; border-radius: 8px; padding: 16px; color: #000000;">
+                        ${outputResultHtml}
                     </div>
                 </div>
 
-                <div class="pdf-section">
-                    <h3>4. Step-by-Step Mathematical Derivation</h3>
-                    <div>
-                        ${resultStepsContent.innerHTML}
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #000000; font-size: 16px; font-weight: 700; border-bottom: 2px solid #000000; padding-bottom: 6px; margin-bottom: 10px;">4. Step-by-Step Mathematical Solution</h3>
+                    <div style="font-size: 13px; line-height: 1.6; color: #000000;">
+                        ${cleanStepsHtml || '<p style="color:#000000;">Direct calculation computed successfully.</p>'}
                     </div>
+                </div>
+
+                <div style="border-top: 1px solid #cbd5e1; padding-top: 10px; margin-top: 30px; text-align: center; color: #64748b; font-size: 11px;">
+                    Matrix Engine Studio • Professional Linear Algebra Computing Suite
                 </div>
             </div>
         `;
 
+        // Display Modal
+        pdfModal.style.display = "flex";
+    });
+
+    modalCloseBtn.addEventListener("click", () => {
+        pdfModal.style.display = "none";
+    });
+
+    pdfModal.addEventListener("click", (e) => {
+        if (e.target === pdfModal) {
+            pdfModal.style.display = "none";
+        }
+    });
+
+    modalPrintBtn.addEventListener("click", () => {
+        window.print();
+    });
+
+    modalDownloadBtn.addEventListener("click", () => {
+        const cfg = opConfigs[currentOp];
+        const cleanTitle = cfg.title.replace(/[^a-zA-Z0-9]/g, '_');
         if (window.html2pdf) {
+            modalDownloadBtn.disabled = true;
+            modalDownloadBtn.textContent = "⏳ Generating...";
             const opt = {
-                margin:       10,
-                filename:     `Matrix_Report_${cfg.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+                margin:       [10, 10, 10, 10],
+                filename:     `Matrix_Report_${cleanTitle}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
-            html2pdf().from(pdfContainer).set(opt).save();
+            html2pdf().set(opt).from(pdfReportPaper).save().then(() => {
+                modalDownloadBtn.disabled = false;
+                modalDownloadBtn.textContent = "📥 Download PDF";
+            }).catch(err => {
+                console.error("html2pdf error:", err);
+                modalDownloadBtn.disabled = false;
+                modalDownloadBtn.textContent = "📥 Download PDF";
+                window.print();
+            });
         } else {
-            // Fallback print window
-            const printWin = window.open('', '', 'width=800,height=600');
-            printWin.document.write('<html><head><title>Matrix Computation Report</title><style>' + document.querySelector('style, link[rel="stylesheet"]').outerHTML + '</style></head><body>' + pdfContainer.innerHTML + '</body></html>');
-            printWin.document.close();
-            printWin.focus();
-            printWin.print();
+            window.print();
         }
     });
 

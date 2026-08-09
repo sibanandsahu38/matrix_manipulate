@@ -222,8 +222,27 @@
                     </div>
                 </div>
 
-                <!-- Printable PDF Template (Hidden off-screen for clean generation) -->
-                <div id="pdfExportContainer" style="display:none;"></div>
+                <!-- PDF Preview & Export Modal -->
+                <div id="pdfModal" class="modal-backdrop" style="display:none;">
+                    <div class="modal-window">
+                        <div class="modal-header">
+                            <div class="modal-title-area">
+                                <h3>📄 Computation Report Preview</h3>
+                                <p>Review your calculation report before downloading</p>
+                            </div>
+                            <div class="modal-btn-group">
+                                <button class="btn-sm btn-primary" id="modalPrintBtn">🖨️ Save as PDF / Print</button>
+                                <button class="btn-sm btn-accent" id="modalDownloadBtn">📥 Download PDF</button>
+                                <button class="btn-sm btn-ghost" id="modalCloseBtn">✕ Close</button>
+                            </div>
+                        </div>
+                        <div class="modal-scroll-area">
+                            <div id="pdfReportPaper" class="pdf-paper-sheet">
+                                <!-- Report generated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
